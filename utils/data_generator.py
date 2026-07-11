@@ -1,5 +1,7 @@
 import uuid
+from faker import Faker
 
+faker = Faker()
 
 def generate_user_data() -> dict:
     short_id = uuid.uuid4().hex[:8]
@@ -11,4 +13,16 @@ def generate_user_data() -> dict:
         "password": password,
         "passwordRepeat": password,
         "roles": ["ADMIN"],
+    }
+
+def generate_movie_data() -> dict:
+
+    return {
+      "name": f"{faker.word()} {uuid.uuid4().hex[:8]}",
+      "imageUrl": "https://image.url",
+      "price": faker.random_int(min=100, max=1000),
+        "description": faker.text(max_nb_chars=200),
+      "location": "SPB",
+      "published": faker.boolean(),
+      "genreId": 1
     }
