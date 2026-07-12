@@ -2,7 +2,7 @@ import requests
 import pytest
 from clients.api_manager import ApiManager
 from config.credentials import ADMIN_EMAIL, ADMIN_PASSWORD
-# from utils.data_generator import DataGenerator
+from utils.data_generator import generate_movie_data
 
 
 @pytest.fixture(scope="session")
@@ -16,9 +16,6 @@ def session():
 def api_manager(session):
     return ApiManager(session)
 
-
-import uuid
-import pytest
 
 
 @pytest.fixture(scope="function")
@@ -65,3 +62,16 @@ def authenticated_user(api_manager, test_user):
     # Шаг 3: возвращаем всё, что нужно тесту
     return api_manager, test_user, user_id
 
+
+
+@pytest.fixture
+def created_movie(api_manager):
+    api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
+
+    movie_data = generate_movie_data()
+    response = api_manager.movies_api.create_movie(movie_data)
+    movie = response.json()
+
+    yield movie_data, movie
+
+    api_manager.movies_api.delete_movie_by_id(movie["id"])
