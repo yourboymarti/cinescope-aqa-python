@@ -8,7 +8,7 @@ def generate_user_data() -> dict:
     password = "12345678Aa"
 
     return {
-        "email": f"test_{short_id}@mail.com",
+        "email": f"test{short_id}@gmail.com",
         "fullName": "Test User",
         "password": password,
         "passwordRepeat": password,

@@ -1,8 +1,15 @@
 import requests
 import pytest
+import uuid
+import os
 from clients.api_manager import ApiManager
-from config.credentials import ADMIN_EMAIL, ADMIN_PASSWORD
+from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data
+
+load_dotenv()
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
 @pytest.fixture(scope="session")
@@ -24,7 +31,7 @@ def test_user():
     short_id = uuid.uuid4().hex[:8]
 
     return {
-        "email": f"test_{short_id}@mail.com",
+        "email": f"test{short_id}@gmail.com",
         "fullName": "Test User",
         "password": password,
         "passwordRepeat": password,
@@ -74,4 +81,10 @@ def created_movie(api_manager):
 
     yield movie_data, movie
 
-    api_manager.movies_api.delete_movie_by_id(movie["id"])
+    try:
+        api_manager.movies_api.get_movie_by_id(movie["id"])
+    except ValueError as error:
+        if "status code: 404" not in str(error):
+            raise
+    else:
+        api_manager.movies_api.delete_movie_by_id(movie["id"])

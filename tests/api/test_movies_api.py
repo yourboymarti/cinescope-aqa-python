@@ -1,5 +1,11 @@
-from config.credentials import ADMIN_EMAIL, ADMIN_PASSWORD
+import os
+from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data, generate_movie_update_data
+
+load_dotenv()
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 class TestMoviesApi:
     def test_get_all_movies(self, api_manager):
@@ -16,6 +22,22 @@ class TestMoviesApi:
         assert "id" in movie
         assert movie["name"] == movie_data["name"]
         assert movie["price"] == movie_data["price"]
+
+
+    def test_create_movie_with_invalid_data(self, api_manager):
+        api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
+        movie_data = generate_movie_data()
+        del movie_data["price"]
+
+        response = api_manager.movies_api.create_movie(movie_data, expected_status=400)
+
+        assert response.status_code == 400
+
+
+    def test_get_movie_by_invalid_id(self, api_manager):
+        response = api_manager.movies_api.get_movie_by_id(0, expected_status=404)
+
+        assert response.status_code == 404
 
 
     def test_get_movie_by_id(self, api_manager, created_movie):
@@ -44,11 +66,8 @@ class TestMoviesApi:
         assert response_data["price"] == update_data["price"]
 
 
-    def test_delete_movie_by_id(self, api_manager):
-        api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
-        movie_data = generate_movie_data()
-        movie = api_manager.movies_api.create_movie(movie_data).json()
-
+    def test_delete_movie_by_id(self, api_manager, created_movie):
+        _, movie = created_movie
         response = api_manager.movies_api.delete_movie_by_id(movie["id"])
 
         assert response.status_code == 200
@@ -60,40 +79,65 @@ class TestMoviesApi:
     def test_get_movies_by_location(self, api_manager, created_movie):
         movie_data, movie = created_movie
 
-        response = api_manager.movies_api.get_all_movies(
-            params={"locations": movie["location"]}
-        )
+        params = {"locations": movie["location"]}
+        response = api_manager.movies_api.get_all_movies(params=params)
         assert response.status_code == 200
 
         response_data = response.json()
+        params["page"] = response_data["pageCount"]
+        response = api_manager.movies_api.get_all_movies(params=params)
+        response_data = response.json()
+        movie_found = False
 
         for movie_from_response in response_data["movies"]:
-            assert movie_from_response["location"] == movie["location"]
+            if movie_from_response["id"] == movie["id"]:
+                movie_found = True
+                assert movie_from_response["location"] == movie["location"]
+
+        assert movie_found
 
 
     def test_get_movies_by_genre_id(self, api_manager, created_movie):
         movie_data, movie = created_movie
 
-        response = api_manager.movies_api.get_all_movies(params={"genreId": movie["genreId"]})
+        params = {"genreId": movie["genreId"]}
+        response = api_manager.movies_api.get_all_movies(params=params)
 
         assert response.status_code == 200
 
         response_data = response.json()
+        params["page"] = response_data["pageCount"]
+        response = api_manager.movies_api.get_all_movies(params=params)
+        response_data = response.json()
+        movie_found = False
 
         for movie_from_response in response_data["movies"]:
-            assert movie_from_response["genreId"] == movie["genreId"]
+            if movie_from_response["id"] == movie["id"]:
+                movie_found = True
+                assert movie_from_response["genreId"] == movie["genreId"]
+
+        assert movie_found
 
 
     def test_get_movies_by_published(self, api_manager, created_movie):
         movie_data, movie = created_movie
 
-        response = api_manager.movies_api.get_all_movies(params={"published": movie["published"]})
+        params = {"published": movie["published"]}
+        response = api_manager.movies_api.get_all_movies(params=params)
         assert response.status_code == 200
 
         response_data = response.json()
-        for movie_from_response in response_data["movies"]:
-            assert movie_from_response["published"] == movie["published"]
+        params["page"] = response_data["pageCount"]
+        response = api_manager.movies_api.get_all_movies(params=params)
+        response_data = response.json()
+        movie_found = False
 
+        for movie_from_response in response_data["movies"]:
+            if movie_from_response["id"] == movie["id"]:
+                movie_found = True
+                assert movie_from_response["published"] == movie["published"]
+
+        assert movie_found
 
 
 
