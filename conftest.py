@@ -1,16 +1,8 @@
 import requests
 import pytest
 from clients.api_manager import ApiManager
+from config.credentials import ADMIN_EMAIL, ADMIN_PASSWORD
 from utils.data_generator import generate_movie_data
-import uuid
-
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
 @pytest.fixture(scope="session")
@@ -83,4 +75,3 @@ def created_movie(api_manager):
     yield movie_data, movie
 
     api_manager.movies_api.delete_movie_by_id(movie["id"])
-
