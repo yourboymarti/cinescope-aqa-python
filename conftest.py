@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data
 
 load_dotenv()
-
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
