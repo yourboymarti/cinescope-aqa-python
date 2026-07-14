@@ -5,10 +5,14 @@ import os
 from clients.api_manager import ApiManager
 from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data
+from entities.user import User
+from typing import Any
 
 load_dotenv()
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+SUPER_ADMIN_USERNAME = os.getenv("SUPER_ADMIN_USERNAME")
+SUPER_ADMIN_PASSWORD= os.getenv("SUPER_ADMIN_PASSWORD")
 
 
 @pytest.fixture(scope="session")
@@ -81,3 +85,45 @@ def created_movie(api_manager):
             raise
     else:
         api_manager.movies_api.delete_movie_by_id(movie["id"])
+
+
+@pytest.fixture
+def user_session():
+    user_pool = []
+
+    def _create_user_session():
+        session = requests.Session()
+        user_session = ApiManager(session)
+        user_pool.append(user_session)
+        return user_session
+
+    yield _create_user_session
+
+    for user in user_pool:
+        user.close_session()
+
+
+
+@pytest.fixture
+def super_admin(user_session):
+    new_session = user_session()
+
+    super_admin = User(
+        SUPER_ADMIN_USERNAME,
+        SUPER_ADMIN_PASSWORD,
+        ["SUPER_ADMIN"],
+        new_session)
+
+    super_admin.api.auth_api.authenticate(super_admin.creds)
+    return super_admin
+
+
+@pytest.fixture
+def creation_user_data(test_user: dict[str, Any]) -> dict[str, Any]:
+    updated_data = test_user.copy()
+    updated_data.update({
+        "roles": ["USER"],
+        "verified": True,
+        "banned": False
+    })
+    return updated_data
