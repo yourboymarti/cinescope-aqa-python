@@ -1,8 +1,15 @@
 import requests
 import pytest
+import uuid
+import os
 from clients.api_manager import ApiManager
-from config.credentials import ADMIN_EMAIL, ADMIN_PASSWORD
-# from utils.data_generator import DataGenerator
+from dotenv import load_dotenv
+from utils.data_generator import generate_movie_data
+
+load_dotenv()
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
 @pytest.fixture(scope="session")
@@ -17,9 +24,6 @@ def api_manager(session):
     return ApiManager(session)
 
 
-import uuid
-import pytest
-
 
 @pytest.fixture(scope="function")
 def test_user():
@@ -27,7 +31,7 @@ def test_user():
     short_id = uuid.uuid4().hex[:8]
 
     return {
-        "email": f"test_{short_id}@mail.com",
+        "email": f"test{short_id}@gmail.com",
         "fullName": "Test User",
         "password": password,
         "passwordRepeat": password,
@@ -65,3 +69,22 @@ def authenticated_user(api_manager, test_user):
     # Шаг 3: возвращаем всё, что нужно тесту
     return api_manager, test_user, user_id
 
+
+
+@pytest.fixture
+def created_movie(api_manager):
+    api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
+
+    movie_data = generate_movie_data()
+    response = api_manager.movies_api.create_movie(movie_data)
+    movie = response.json()
+
+    yield movie_data, movie
+
+    try:
+        api_manager.movies_api.get_movie_by_id(movie["id"])
+    except ValueError as error:
+        if "status code: 404" not in str(error):
+            raise
+    else:
+        api_manager.movies_api.delete_movie_by_id(movie["id"])

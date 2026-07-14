@@ -2,11 +2,11 @@
 .vscode/
 .venv/
 .DS_Store
-venv/
+/venv/
 __pycache__/
 *.db
 *.xlsx
 *.log
 *.csv
-.token
+*.env
 .env
