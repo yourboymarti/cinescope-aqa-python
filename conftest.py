@@ -46,15 +46,11 @@ def registered_user(api_manager, test_user):
     return test_user
 
 
-
-
-
 @pytest.fixture(scope="function")
 def unauthenticated_api_manager():
     http_session = requests.Session()
     yield ApiManager(http_session)
     http_session.close()
-
 
 
 @pytest.fixture
@@ -68,8 +64,6 @@ def authenticated_user(api_manager, test_user):
 
     # Шаг 3: возвращаем всё, что нужно тесту
     return api_manager, test_user, user_id
-
-
 
 @pytest.fixture
 def created_movie(api_manager):
