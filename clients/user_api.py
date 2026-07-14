@@ -9,9 +9,13 @@ class UserApi(CustomRequester):
         self.session = session
         super().__init__(session=session, base_url=AUTH_BASE_URL)
 
-    def get_user(self, user_locator):
-        return self.send_request("GET", f"/user/{user_locator}")
-
+    def get_user(self, user_locator, expected_status=200, **kwargs):
+        return self.send_request(
+            method="GET",
+            endpoint=f"{USER}/{user_locator}",
+            expected_status=expected_status,
+            **kwargs
+        )
     def get_user_info(self, user_id, expected_status=200, **kwargs):
         return self.send_request(
             method="GET",

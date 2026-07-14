@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data
 from entities.user import User
 from typing import Any
+from constants.roles import Roles
+from utils.data_generator import DataGenerator
+
 
 load_dotenv()
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
@@ -30,15 +33,14 @@ def api_manager(session):
 
 @pytest.fixture(scope="function")
 def test_user():
-    password = "12345678Aa"
-    short_id = uuid.uuid4().hex[:8]
+    random_password = DataGenerator.generate_random_password()
 
     return {
-        "email": f"test{short_id}@gmail.com",
-        "fullName": "Test User",
-        "password": password,
-        "passwordRepeat": password,
-        "roles": ["ADMIN"]
+        "email": DataGenerator.generate_random_email(),
+        "fullName": DataGenerator.generate_random_name(),
+        "password": random_password,
+        "passwordRepeat": random_password,
+        "roles": [Roles.USER.value]
     }
 
 @pytest.fixture(scope="function")
@@ -111,7 +113,7 @@ def super_admin(user_session):
     super_admin = User(
         SUPER_ADMIN_USERNAME,
         SUPER_ADMIN_PASSWORD,
-        ["SUPER_ADMIN"],
+        [Roles.SUPER_ADMIN.value],
         new_session)
 
     super_admin.api.auth_api.authenticate(super_admin.creds)
@@ -127,3 +129,17 @@ def creation_user_data(test_user: dict[str, Any]) -> dict[str, Any]:
         "banned": False
     })
     return updated_data
+
+@pytest.fixture
+def common_user(user_session, super_admin, creation_user_data):
+    new_session = user_session()
+
+    common_user = User(
+        creation_user_data['email'],
+        creation_user_data['password'],
+        [Roles.USER.value],
+        new_session)
+
+    super_admin.api.user_api.create_user(creation_user_data)
+    common_user.api.auth_api.authenticate(common_user.creds)
+    return common_user

@@ -3,6 +3,28 @@ from faker import Faker
 
 faker = Faker()
 
+class DataGenerator:
+
+    @staticmethod
+    def generate_random_password():
+        return faker.password(
+            length=12,
+            special_chars=False,
+            digits=True,
+            upper_case=True,
+            lower_case=True
+        )
+
+    @staticmethod
+    def generate_random_email():
+        return f"test{uuid.uuid4().hex[:8]}@gmail.com"
+
+
+    @staticmethod
+    def generate_random_name():
+        return faker.name()
+
+
 def generate_user_data() -> dict:
     short_id = uuid.uuid4().hex[:8]
     password = "12345678Aa"
