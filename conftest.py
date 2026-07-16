@@ -71,22 +71,20 @@ def authenticated_user(api_manager, test_user):
     return api_manager, test_user, user_id
 
 @pytest.fixture
-def created_movie(api_manager):
-    api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
-
+def created_movie(api_manager, super_admin):
     movie_data = generate_movie_data()
-    response = api_manager.movies_api.create_movie(movie_data)
+    response = super_admin.api.movies_api.create_movie(movie_data)
     movie = response.json()
 
     yield movie_data, movie
 
     try:
-        api_manager.movies_api.get_movie_by_id(movie["id"])
+        super_admin.api.movies_api.get_movie_by_id(movie["id"])
     except ValueError as error:
         if "status code: 404" not in str(error):
             raise
     else:
-        api_manager.movies_api.delete_movie_by_id(movie["id"])
+        super_admin.api.movies_api.delete_movie_by_id(movie["id"])
 
 
 @pytest.fixture
