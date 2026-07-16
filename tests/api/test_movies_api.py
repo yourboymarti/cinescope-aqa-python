@@ -146,4 +146,9 @@ class TestMoviesApi:
 
         assert response.status_code == 403
 
+    def test_admin_cannot_create_movie(self, admin_user):
+        movie_data = generate_movie_data()
+        response = admin_user.api.movies_api.create_movie(movie_data, expected_status=403)
+
+        assert response.status_code == 403
 
