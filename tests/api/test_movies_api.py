@@ -140,3 +140,10 @@ class TestMoviesApi:
 
 
 
+    def test_common_user_cannot_create_movie(self, common_user):
+        movie_data = generate_movie_data()
+        response = common_user.api.movies_api.create_movie(movie_data, expected_status=403)
+
+        assert response.status_code == 403
+
+

@@ -122,7 +122,18 @@ def super_admin(user_session):
 def creation_user_data(test_user: dict[str, Any]) -> dict[str, Any]:
     updated_data = test_user.copy()
     updated_data.update({
-        "roles": ["USER"],
+        "roles": [Roles.USER.value],
+        "verified": True,
+        "banned": False
+    })
+    return updated_data
+
+
+@pytest.fixture
+def creation_admin_data(test_user: dict[str, Any]) -> dict[str, Any]:
+    updated_data = test_user.copy()
+    updated_data.update({
+        "roles": [Roles.ADMIN.value],
         "verified": True,
         "banned": False
     })
@@ -136,8 +147,23 @@ def common_user(user_session, super_admin, creation_user_data):
         creation_user_data['email'],
         creation_user_data['password'],
         [Roles.USER.value],
-        new_session)
+        new_session
+    )
 
     super_admin.api.user_api.create_user(creation_user_data)
     common_user.api.auth_api.authenticate(common_user.creds)
     return common_user
+
+@pytest.fixture
+def admin_user(user_session, super_admin, creation_admin_data):
+    new_session = user_session()
+
+    admin_user = User(
+        creation_admin_data['email'],
+        creation_admin_data['password'],
+        [Roles.ADMIN.value],
+        new_session
+    )
+    super_admin.api.user_api.create_user(creation_admin_data)
+    admin_user.api.auth_api.authenticate(admin_user.creds)
+    return admin_user
