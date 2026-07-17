@@ -1,4 +1,6 @@
 import os
+
+import pytest
 from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data, generate_movie_update_data
 
@@ -138,6 +140,35 @@ class TestMoviesApi:
 
         assert movie_found
 
+    @pytest.mark.parametrize(
+        "filter_name, movie_field",
+        [
+            ("locations", "location"),
+            ("genreId", "genreId"),
+            ("published", "published"),
+        ]
+    )
+    def test_get_movies_by_filters(self, api_manager, created_movie, filter_name, movie_field):
+        movie_data, movie = created_movie
+        params = {filter_name: movie[movie_field]}
+
+        response = api_manager.movies_api.get_all_movies(params=params)
+        assert response.status_code == 200
+
+        response_data = response.json()
+        params["page"] = response_data["pageCount"]
+
+        response = api_manager.movies_api.get_all_movies(params=params)
+        response_data = response.json()
+
+        movie_found = False
+
+        for movie_from_response in response_data["movies"]:
+            if movie_from_response["id"] == movie["id"]:
+                movie_found = True
+                assert movie_from_response[movie_field] == movie[movie_field]
+
+        assert movie_found
 
 
     def test_common_user_cannot_create_movie(self, common_user):
@@ -151,4 +182,6 @@ class TestMoviesApi:
         response = admin_user.api.movies_api.create_movie(movie_data, expected_status=403)
 
         assert response.status_code == 403
+
+
 
