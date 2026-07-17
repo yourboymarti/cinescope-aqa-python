@@ -184,4 +184,27 @@ class TestMoviesApi:
         assert response.status_code == 403
 
 
+    @pytest.mark.parametrize("user_fixture, expected_status",
+    [
+        ("super_admin", 200),
+        ("admin_user", 403),
+        ("common_user", 403),
+    ]
+                             )
+    def test_delete_movie_by_role(self, request, created_movie, user_fixture, expected_status, api_manager):
+        user = request.getfixturevalue(user_fixture)
+        _, movie = created_movie
+        response = user.api.movies_api.delete_movie_by_id(movie["id"], expected_status=expected_status)
+
+        assert response.status_code == expected_status
+
+        if expected_status == 200:
+            get_response = api_manager.movies_api.get_movie_by_id(movie["id"], expected_status=404)
+            assert get_response.status_code == 404
+
+
+
+
+
+
 
