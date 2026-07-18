@@ -1,7 +1,10 @@
 import pytest
 import requests
 from utils.data_generator import generate_user_data
+from models.users import RegistrationUser
+import logging
 
+logger = logging.getLogger(__name__)
 
 class TestAuth:
     def test_register_user(self, api_manager, test_user):
@@ -45,5 +48,16 @@ class TestAuth:
             user_ids.append(user_id)
 
         api_manager.user_api.delete_users(*user_ids)
+
+    def test_validate_user_models(self, test_user, creation_user_data):
+        validated_test_user = RegistrationUser(**test_user)
+        validated_creation_user = RegistrationUser(**creation_user_data)
+
+        test_user_json = validated_test_user.model_dump_json(exclude_unset=True)
+        creation_user_json = validated_creation_user.model_dump_json()
+
+        logger.info(f"test_user_json: {test_user_json}")
+        logger.info(f"creation_user_json: {creation_user_json}")
+
 
 
