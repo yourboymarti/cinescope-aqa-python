@@ -3,6 +3,7 @@ import requests
 from utils.data_generator import generate_user_data
 from models.users import RegistrationUser
 import logging
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -59,5 +60,8 @@ class TestAuth:
         logger.info(f"test_user_json: {test_user_json}")
         logger.info(f"creation_user_json: {creation_user_json}")
 
+    def test_validate_user_model_with_invalid_email(self, test_user):
+        test_user["email"] = "invalid-email"
 
-
+        with pytest.raises(ValidationError):
+            RegistrationUser(**test_user)
