@@ -4,6 +4,8 @@ import uuid
 import os
 from clients.api_manager import ApiManager
 from dotenv import load_dotenv
+
+from models.base_models import TestUser
 from utils.data_generator import generate_movie_data
 from entities.user import User
 from typing import Any
@@ -31,24 +33,26 @@ def api_manager(session):
 
 
 
-@pytest.fixture(scope="function")
-def test_user():
+@pytest.fixture
+def test_user() -> TestUser:
     random_password = DataGenerator.generate_random_password()
 
-    return {
-        "email": DataGenerator.generate_random_email(),
-        "fullName": DataGenerator.generate_random_name(),
-        "password": random_password,
-        "passwordRepeat": random_password,
-        "roles": [Roles.USER.value]
-    }
+    return TestUser(
+        email=DataGenerator.generate_random_email(),
+        fullName=DataGenerator.generate_random_name(),
+        password=random_password,
+        passwordRepeat=random_password,
+        roles=[Roles.USER]
+    )
 
 @pytest.fixture(scope="function")
-def registered_user(api_manager, test_user):
+def registered_user(api_manager, test_user: TestUser):
     response = api_manager.auth_api.register_user(test_user).json()
-    test_user["id"] = response["id"]
 
-    return test_user
+    registered_user_data = test_user.model_dump()
+    registered_user_data["id"] = response["id"]
+
+    return registered_user_data
 
 
 @pytest.fixture(scope="function")
@@ -59,16 +63,13 @@ def unauthenticated_api_manager():
 
 
 @pytest.fixture
-def authenticated_user(api_manager, test_user):
-    # Шаг 1: регистрация
+def authenticated_user(api_manager, test_user: TestUser):
     response = api_manager.auth_api.register_user(test_user)
     user_id = response.json()["id"]
 
-    # Шаг 2: логин/аутентификация
     api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
 
-    # Шаг 3: возвращаем всё, что нужно тесту
-    return api_manager, test_user, user_id
+    return api_manager, test_user.model_dump(), user_id
 
 @pytest.fixture
 def created_movie(api_manager, super_admin):
@@ -119,8 +120,8 @@ def super_admin(user_session):
 
 
 @pytest.fixture
-def creation_user_data(test_user: dict[str, Any]) -> dict[str, Any]:
-    updated_data = test_user.copy()
+def creation_user_data(test_user: TestUser) -> dict[str, Any]:
+    updated_data = test_user.model_dump()
     updated_data.update({
         "roles": [Roles.USER.value],
         "verified": True,
@@ -130,8 +131,8 @@ def creation_user_data(test_user: dict[str, Any]) -> dict[str, Any]:
 
 
 @pytest.fixture
-def creation_admin_data(test_user: dict[str, Any]) -> dict[str, Any]:
-    updated_data = test_user.copy()
+def creation_admin_data(test_user: TestUser) -> dict[str, Any]:
+    updated_data = test_user.model_dump()
     updated_data.update({
         "roles": [Roles.ADMIN.value],
         "verified": True,
@@ -170,13 +171,13 @@ def admin_user(user_session, super_admin, creation_admin_data):
 
 
 @pytest.fixture
-def registration_user_data():
+def registration_user_data() -> TestUser:
     random_password = DataGenerator.generate_random_password()
 
-    return {
-        "email": DataGenerator.generate_random_email(),
-        "fullName": DataGenerator.generate_random_name(),
-        "password": random_password,
-        "passwordRepeat": random_password,
-        "roles": [Roles.USER.value]
-    }
+    return TestUser(
+        email=DataGenerator.generate_random_email(),
+        fullName=DataGenerator.generate_random_name(),
+        password=random_password,
+        passwordRepeat=random_password,
+        roles=[Roles.USER]
+    )
