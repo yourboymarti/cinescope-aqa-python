@@ -1,13 +1,8 @@
-import os
-
 import pytest
-from dotenv import load_dotenv
 from utils.data_generator import generate_movie_data, generate_movie_update_data
 
-load_dotenv()
 
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+
 
 class TestMoviesApi:
     def test_get_all_movies(self, api_manager):
@@ -203,8 +198,22 @@ class TestMoviesApi:
             assert get_response.status_code == 404
 
 
+    def test_create_and_delete_movie_in_db(self, super_admin, db_helper):
+        movie_data = generate_movie_data()
+        assert db_helper.get_movie_by_name(movie_data["name"]) is None
 
+        response = super_admin.api.movies_api.create_movie(movie_data)
+        movie = response.json()
+        assert response.status_code == 201
 
+        assert db_helper.movie_exists_by_id(movie["id"]) is True
+        movie_from_db = db_helper.get_movie_by_id(movie["id"])
 
+        assert movie_from_db.name == movie_data["name"]
+        assert movie_from_db.price == movie_data["price"]
+        assert movie_from_db.description == movie_data["description"]
 
+        delete_response = super_admin.api.movies_api.delete_movie_by_id(movie["id"])
+        assert delete_response.status_code == 200
+        assert db_helper.get_movie_by_id(movie["id"]) is None
 

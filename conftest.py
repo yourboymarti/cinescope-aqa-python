@@ -1,23 +1,19 @@
 import requests
 import pytest
-import uuid
-import os
-from clients.api_manager import ApiManager
-from dotenv import load_dotenv
 
+
+from clients.api_manager import ApiManager
+from resources.credentials import MoviesCreds
 from models.base_models import TestUser
 from utils.data_generator import generate_movie_data
 from entities.user import User
 from typing import Any
 from constants.roles import Roles
 from utils.data_generator import DataGenerator
+from sqlalchemy.orm import Session
+from db_requester.db_client import get_db_session
+from db_requester.db_helpers import DBHelper
 
-
-load_dotenv()
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
-SUPER_ADMIN_USERNAME = os.getenv("SUPER_ADMIN_USERNAME")
-SUPER_ADMIN_PASSWORD= os.getenv("SUPER_ADMIN_PASSWORD")
 
 
 @pytest.fixture(scope="session")
@@ -67,7 +63,7 @@ def authenticated_user(api_manager, test_user: TestUser):
     response = api_manager.auth_api.register_user(test_user)
     user_id = response.json()["id"]
 
-    api_manager.auth_api.authenticate((ADMIN_EMAIL, ADMIN_PASSWORD))
+    api_manager.auth_api.authenticate((MoviesCreds.ADMIN_EMAIL, MoviesCreds.ADMIN_PASSWORD))
 
     return api_manager, test_user.model_dump(), user_id
 
@@ -110,8 +106,8 @@ def super_admin(user_session):
     new_session = user_session()
 
     super_admin = User(
-        SUPER_ADMIN_USERNAME,
-        SUPER_ADMIN_PASSWORD,
+        MoviesCreds.SUPER_ADMIN_USERNAME,
+        MoviesCreds.SUPER_ADMIN_PASSWORD,
         [Roles.SUPER_ADMIN.value],
         new_session)
 
@@ -181,3 +177,35 @@ def registration_user_data() -> TestUser:
         passwordRepeat=random_password,
         roles=[Roles.USER]
     )
+
+@pytest.fixture(scope="module")
+def db_session() -> Session:
+    """
+    Фикстура, которая создает и возвращает сессию для работы с базой данных
+    После завершения теста сессия автоматически закрывается
+    """
+    db_session = get_db_session()
+    yield db_session
+    db_session.close()
+
+
+@pytest.fixture(scope="function")
+def db_helper(db_session) -> DBHelper:
+    """
+    Фикстура для экземпляра хелпера
+    """
+    db_helper = DBHelper(db_session)
+    return db_helper
+
+
+@pytest.fixture(scope="function")
+def created_test_user(db_helper):
+    """
+    Фикстура, которая создает тестового пользователя в БД
+    и удаляет его после завершения теста
+    """
+    user = db_helper.create_test_user(DataGenerator.generate_user_data())
+    yield user
+
+    if db_helper.get_user_by_id(user.id):
+        db_helper.delete_user(user)

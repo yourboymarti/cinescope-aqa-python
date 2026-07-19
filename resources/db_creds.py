@@ -3,8 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_HOST=os.getenv("DB_HOST")
-DB_USER=os.getenv("DB_USER")
-DB_PASSWORD=os.getenv("DB_PASSWORD")
-DB_NAME=os.getenv("DB_NAME")
-DB_PORT=os.getenv("DB_PORT")
+
+class MoviesDbCreds:
+    DB_MOVIES_HOST=os.getenv("DB_MOVIES_HOST")
+    DB_MOVIES_PORT=os.getenv("DB_MOVIES_PORT")
+    DB_MOVIES_NAME=os.getenv("DB_MOVIES_NAME")
+    DB_MOVIES_USERNAME=os.getenv("DB_MOVIES_USERNAME")
+    DB_MOVIES_PASSWORD=os.getenv("DB_MOVIES_PASSWORD")
