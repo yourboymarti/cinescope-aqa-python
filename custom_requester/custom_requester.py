@@ -3,6 +3,7 @@ import logging
 import os
 import time
 import requests
+from pydantic import BaseModel
 
 
 class CustomRequester:
@@ -16,13 +17,15 @@ class CustomRequester:
         self.base_url = base_url
         self.headers = self.base_headers.copy()
         # self.headers = self.base_headers
-        self.session.headers.update(self.base_headers)
+        self.session.headers = self.base_headers.copy()
         self.logger = logging.getLogger(__name__)
 
     def send_request(self, method, endpoint, data=None, params=None, expected_status=200, need_logging=True, **kwargs):
         url = f"{self.base_url}{endpoint}"
         start_time = time.time()
 
+        if isinstance(data, BaseModel):
+            data = json.loads(data.model_dump_json(exclude_unset=True))
         response = self.session.request(
             method=method,
             url=url,
