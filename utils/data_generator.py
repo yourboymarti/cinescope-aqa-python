@@ -40,6 +40,10 @@ class DataGenerator:
             'roles': '{USER}'
         }
 
+    @staticmethod
+    def generate_random_int(param):
+        return faker.random_int(min=0, max=param)
+
 
 def generate_user_data() -> dict:
     short_id = uuid.uuid4().hex[:8]
