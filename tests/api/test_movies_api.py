@@ -217,3 +217,53 @@ class TestMoviesApi:
         assert delete_response.status_code == 200
         assert db_helper.get_movie_by_id(movie["id"]) is None
 
+
+    def test_update_movie_in_db(self, super_admin, db_helper, created_movie):
+
+        movie_data, movie = created_movie
+        update_data = generate_movie_update_data()
+
+        movie_from_db = db_helper.get_movie_by_id(movie["id"])
+        assert movie_from_db is not None
+
+        response = super_admin.api.movies_api.update_movie_by_id(movie["id"], update_data)
+        assert response.status_code == 200
+        db_helper.db_session.expire_all()
+
+        db_movie_after_update = db_helper.get_movie_by_id(movie["id"])
+        assert db_movie_after_update is not None
+        assert db_movie_after_update.name == update_data["name"]
+        assert db_movie_after_update.price == update_data["price"]
+        assert db_movie_after_update.description == update_data["description"]
+
+
+    def test_movie_genre_id_in_db(self, db_helper, created_movie):
+
+        movie_data, movie = created_movie
+
+        movie_from_db = db_helper.get_movie_by_id(movie["id"])
+        assert movie_from_db is not None
+        assert movie_from_db.genre_id == movie_data["genreId"]
+
+
+    def test_deleted_movie_absent_in_db(self, super_admin, db_helper, created_movie):
+
+        movie_data, movie = created_movie
+
+        movie_from_db = db_helper.get_movie_by_id(movie["id"])
+        assert movie_from_db is not None
+
+        response = super_admin.api.movies_api.delete_movie_by_id(movie["id"])
+        assert response.status_code == 200
+
+        movie_not_in_db = db_helper.get_movie_by_id(movie["id"])
+        assert movie_not_in_db is None
+
+
+    def test_movie_published_status_in_db(self, db_helper, created_movie):
+
+        movie_data, movie = created_movie
+
+        movie_from_db = db_helper.get_movie_by_id(movie["id"])
+        assert movie_from_db is not None
+        assert movie_from_db.published == movie_data["published"]
