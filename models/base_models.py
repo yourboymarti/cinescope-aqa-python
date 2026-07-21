@@ -65,3 +65,24 @@ class UserInfoResponse(BaseModel):
 
 class UnauthorizedResponse(BaseModel):
     message: str
+
+
+
+class MovieResponse(BaseModel):
+    id: int
+    name: str
+    price: int
+    published: bool
+    description: str
+    location: str
+    genreId: int
+    rating: int | float
+    imageUrl: str
+    createdAt: str
+
+
+class MoviesResponse(BaseModel):
+    movies: list[MovieResponse]
+    page: int
+    pageSize: int
+    pageCount: int
