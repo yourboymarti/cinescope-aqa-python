@@ -1,6 +1,13 @@
+allure-python-commons
+allure-pytest
+sqlalchemy
 gradio
 pydantic
 pytest
+pytest-check
+pytest-mock
 requests
 faker
 python-dotenv
+psycopg2-binary
+pytest-rerunfailures

@@ -3,6 +3,7 @@ from requests import Response
 from custom_requester.custom_requester import CustomRequester
 from config.base_urls import API_BASE_URL
 
+
 MOVIES = '/movies'
 
 class MoviesApi(CustomRequester):
