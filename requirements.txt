@@ -9,3 +9,5 @@ pytest-mock
 requests
 faker
 python-dotenv
+psycopg2-binary
+pytest-rerunfailures

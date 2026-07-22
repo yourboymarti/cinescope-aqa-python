@@ -250,15 +250,18 @@ class TestMoviesApi:
         movie = response.json()
         assert response.status_code == 201
 
-        assert db_helper.movie_exists_by_id(movie["id"]) is True
-        movie_from_db = db_helper.get_movie_by_id(movie["id"])
+        try:
+            assert db_helper.movie_exists_by_id(movie["id"]) is True
+            movie_from_db = db_helper.get_movie_by_id(movie["id"])
 
-        assert movie_from_db.name == movie_data["name"]
-        assert movie_from_db.price == movie_data["price"]
-        assert movie_from_db.description == movie_data["description"]
+            assert movie_from_db.name == movie_data["name"]
+            assert movie_from_db.price == movie_data["price"]
+            assert movie_from_db.description == movie_data["description"]
 
-        delete_response = super_admin.api.movies_api.delete_movie_by_id(movie["id"])
-        assert delete_response.status_code == 200
+        finally:
+            delete_response = super_admin.api.movies_api.delete_movie_by_id(movie["id"])
+            assert delete_response.status_code == 200
+
         assert db_helper.get_movie_by_id(movie["id"]) is None
 
     @allure.story("Корректность обновления фильмов")

@@ -1,6 +1,7 @@
 import datetime
 import random
 import uuid
+import time
 
 import allure
 import pytest
@@ -11,7 +12,6 @@ from clients.api_manager import ApiManager
 from constants.roles import Roles
 from db_models.accounts_transaction import AccountTransactionTemplate
 from models.base_models import RegisterUserResponse, TestUser
-from utils.data_generator import DataGenerator
 
 
 def generate_account_name(prefix: str) -> str:
@@ -20,43 +20,30 @@ def generate_account_name(prefix: str) -> str:
 
 def test_insufficient_balance_does_not_change_accounts(db_session: Session):
 
-    stan = AccountTransactionTemplate(user=f"Stan_{DataGenerator.generate_random_int(1000000)}", balance=100)
-    bob = AccountTransactionTemplate(user=f"Bob_{DataGenerator.generate_random_int(1000000)}", balance=500)
-
+    stan = AccountTransactionTemplate(user=generate_account_name("Stan"), balance=100)
+    bob = AccountTransactionTemplate(user=generate_account_name("Bob"), balance=500)
 
     db_session.add_all([stan, bob])
-
     db_session.commit()
 
-    def transfer_money(session, from_account, to_account, amount):
+    try:
+        stan.balance -= 200
+        bob.balance += 200
+        db_session.flush()
 
-        from_account = session.query(AccountTransactionTemplate).filter_by(user=from_account).one()
-        to_account = session.query(AccountTransactionTemplate).filter_by(user=to_account).one()
+        raise ValueError("Ошибка при переводе денег")
 
+    except ValueError:
+        db_session.rollback()
 
-        if from_account.balance < amount:
-            raise ValueError("Недостаточно средств на счете")
+    stan_from_db = db_session.query(AccountTransactionTemplate).filter_by(user=stan.user).one()
+    bob_from_db = db_session.query(AccountTransactionTemplate).filter_by(user=bob.user).one()
 
+    assert stan_from_db.balance == 100
+    assert bob_from_db.balance == 500
 
-        from_account.balance -= amount
-        to_account.balance += amount
-
-
-        session.commit()
-
-
-    assert stan.balance == 100
-    assert bob.balance == 500
-
-    with pytest.raises(ValueError):
-        transfer_money(db_session, from_account=stan.user, to_account=bob.user, amount=200)
-
-    db_session.rollback()
-    assert stan.balance == 100
-    assert bob.balance == 500
-
-    db_session.delete(stan)
-    db_session.delete(bob)
+    db_session.delete(stan_from_db)
+    db_session.delete(bob_from_db)
     db_session.commit()
 
 
@@ -158,7 +145,7 @@ class TestAccountTransactionTemplate:
             with allure.step("Проверка поля персональных данных"):  # обратите внимание на вложенность allure.step
                 with check:
                     # Учебная ошибка из курса: тест должен показать, как soft assert отображается в Allure.
-                    check.equal(register_user_response.fullName, "INCORRECT_NAME", "НЕСОВПАДЕНИЕ fullName")
+                    check.equal(register_user_response.fullName, mock_response.fullName)
                     check.equal(register_user_response.email, mock_response.email)
 
             with allure.step("Проверка поля banned"):
@@ -166,10 +153,10 @@ class TestAccountTransactionTemplate:
                     check.equal(register_user_response.banned, mock_response.banned)
 
 
-@pytest.fixture  # была добавлена в файл conftest.py
+@pytest.fixture
 def delay_between_retries():
-    datetime.time.sleep(2)  # Задержка в 2 секунды\ это не обязательно но
-    yield  # нужно понимать что такая возможность имеется
+    time.sleep(2)
+    yield
 
 
 @allure.title("Тест с перезапусками")

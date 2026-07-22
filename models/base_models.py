@@ -83,6 +83,7 @@ class MovieResponse(BaseModel):
 
 class MoviesResponse(BaseModel):
     movies: list[MovieResponse]
+    count: int
     page: int
     pageSize: int
     pageCount: int

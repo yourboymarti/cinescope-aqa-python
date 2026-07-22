@@ -178,21 +178,24 @@ def registration_user_data() -> TestUser:
         roles=[Roles.USER]
     )
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def db_session() -> Session:
     """
-    Фикстура, которая создает и возвращает сессию для работы с базой данных
-    После завершения теста сессия автоматически закрывается
+    Фикстура создает отдельную сессию БД для каждого теста.
+    После теста откатывает незавершенные изменения и закрывает сессию.
     """
     db_session = get_db_session()
-    yield db_session
-    db_session.close()
+    try:
+        yield db_session
+    finally:
+        db_session.rollback()
+        db_session.close()
 
 
 @pytest.fixture(scope="function")
 def db_helper(db_session) -> DBHelper:
     """
-    Фикстура для экземпляра хелпера
+    Фикстура возвращает хелпер для работы с БД.
     """
     db_helper = DBHelper(db_session)
     return db_helper
